@@ -160,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // 获取历史记录
     private void get_history() {
         SharedPreferences history_data = getSharedPreferences("history", MODE_PRIVATE);
-        String classes = "2015计算机科学与技术01\n" +
+        temp_history = "2015计算机科学与技术01\n" +
                 "2015计算机科学与技术02\n" +
                 "2015计算机科学与技术03\n" +
                 "2015计算机科学与技术04\n" +
@@ -169,7 +169,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 "2015软件工程02\n" +
                 "2015软件工程03\n" +
                 "2015网络工程01\n";
-        temp_history = classes;
         temp_history += history_data.getString("history", "");
         if (!"".equals(temp_history)) {
             String[] temp = temp_history.split("\n");
@@ -297,19 +296,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
     @Override
     protected void onResume() {
+        // 同上
         lam.dispatchResume();
         super.onResume();
     }
     // 点击事件
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.button) {
+        if (v.getId() == R.id.send) {
             // 清除之前储存的信息
             main_limit.clear();
             main_chosen.clear();
             limit.clear();
             chosen.clear();
             QueryStr = input.getText().toString();
+            // 获取查询结果
             new Thread(new Runnable() {
                 @Override
                 public void run() {
