@@ -4,12 +4,15 @@ import android.app.LocalActivityManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.Looper;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
@@ -27,19 +30,30 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+/*
+ * 期待加入的功能：
+ * 【×】自动登陆SSL VPN(方便非内部网环境登陆)
+ * 【.】选课功能(如果人数没有满则正常选课，人数满了则添加至后台时刻监控)
+ * 【.】退课功能
+ * 【×】抓取课程评价
+ * 【√】学分查询
+ */
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private LocalActivityManager lam;
-    private WebView web;
+    private MyWebView web;
     private AutoCompleteTextView input;
     private Spinner spinner;
+    private FloatingActionButton add_course;
     private String cookie;
     private String url;
-    private String xuan_ke ="";
-    private String ke_cheng_biao ="";
+    private String xuan_ke = "";
+    private String ke_cheng_biao = "";
     private String query;
     private String QueryStr;
     private String query_encode;
@@ -53,17 +67,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ArrayList<Integer> chosen = new ArrayList<>();      // 非主选已选
     private ArrayAdapter<String> adapter;
 
+    private final String classes = "2015计算机科学与技术01\n" +
+            "2015计算机科学与技术02\n" +
+            "2015计算机科学与技术03\n" +
+            "2015计算机科学与技术04\n" +
+            "2015计算机科学与技术05\n" +
+            "2015软件工程01\n" +
+            "2015软件工程02\n" +
+            "2015软件工程03\n" +
+            "2015网络工程01\n";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         // 获取组件
         Button button = (Button) findViewById(R.id.send);
+        add_course = (FloatingActionButton) findViewById(R.id.fb_add);
+        FloatingActionButton remove_course = (FloatingActionButton) findViewById(R.id.fb_delete);
         input = (AutoCompleteTextView) findViewById(R.id.input);
         spinner = (Spinner) findViewById(R.id.spinner);
-        web = (WebView) findViewById(R.id.web);
+        web = (MyWebView) findViewById(R.id.web);
         WebView web2 = (WebView) findViewById(R.id.web_view_2);
         WebView web3 = (WebView) findViewById(R.id.web_view_3);
+        WebView web4 = (WebView) findViewById(R.id.web_view_4);
+        // 获取传递信息
         Intent intent = getIntent();
         cookie = intent.getStringExtra("cookie");
         url = intent.getStringExtra("url");
@@ -79,29 +107,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         String temp = "<h1 align=\"center\">登陆成功,欢迎!</h1>\n";
         web.getSettings().setDefaultTextEncodingName("UTF-8");  // 设置默认为utf-8
         web.loadData(temp, "text/html; charset=UTF-8", null);   // 这种写法可以正确解码
-        // 生成历史纪录显示
+        // 获取之前储存的历史纪录
         get_history();
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, history);
         input.setAdapter(adapter);
-        // 加载2、3选项卡的页面信息
-        while (xuan_ke.equals("")){}         // 等待页面获取
+        // 加载2、3、4选项卡的页面信息
+        while (xuan_ke.equals("")) {}         // 等待页面获取
         web2.loadData(xuan_ke, "text/html; charset=UTF-8", null);
-        while (ke_cheng_biao.equals("")){}   // 等待页面获取
+        while (ke_cheng_biao.equals("")) {}   // 等待页面获取
         web3.loadData(ke_cheng_biao, "text/html; charset=UTF-8", null);
-        // 查询按钮监听事件
+        web4.getSettings().setJavaScriptEnabled(true);
+        web4.setWebViewClient(new WebViewClient());
+        web4.loadUrl("http://sdt.jsmmzz.com/xuefen/index.php"); // 加载查询学分的网页
+        // http://www.szu.me/kc/index.php  课程评价网页
+        // 监听事件
         button.setOnClickListener(this);
+        add_course.setOnClickListener(this);
+        remove_course.setOnClickListener(this);
+        // webview滚动监听事件,当webview滚动时隐藏悬浮按钮,停止滚动后300ms显示
+        web.setOnScrollChangedCallback(new MyWebView.OnScrollChangedCallback() {
+            @Override
+            public void onScroll(int dx, int dy) {
+                add_course.hide();
+                Timer timer = new Timer(true);
+                TimerTask task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        Looper.prepare();
+                        add_course.show();
+                        Looper.loop();
+                    }
+                };
+                timer.schedule(task, 300);  // 300ms后执行延时任务
+            }
+        });
     }
+
     /*
      * 具体功能的实现方法
      */
     // 修改课程信息结果表格
-    private void modify_table(){
+    private void modify_table() {
         // 过滤无关信息，改造表格
         query = query.replaceAll("备注</td></tr>", "备注</td><td>主选限制数</td><td>主选已选数</td><td>非主选限制数</td><td>非主选已选数</td></tr>");
-        query = query.replaceAll("<td>必<br>修</td><td>选<br>修</td>", "");
+//        query = query.replaceAll("<td>必<br>修</td><td>选<br>修</td>", "");
         query = query.replaceAll("<td>选课<br>人数</td>", "");
-        query = query.replaceAll("<td><img [\\w\\W]{0,140}></td>", "</td>");
-        query = query.replaceAll("<td><input [\\w\\W]{0,50}修\"></td>","");
+        query = query.replaceAll("<td><img [\\w\\W]{0,140}></td>", "</td>");    // 删除小望远镜图片
+//        query = query.replaceAll("<td><input [\\w\\W]{0,50}修\"></td>","");
         Log.d("1", "run: " + query);
         // 查找对应课程的课程编号
         String regex = "<td>([a-zA-z0-9]{2,})</td>"; // 课程编号(考虑MOOC的情况，前面有MC两个字母)
@@ -146,8 +198,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (main_chosen_num < main_limit_num) {
                     part[i] = part[i].replaceAll("<tr>", "<tr bgcolor=\"yellow\">");
                 }
-            } catch(Exception e) {
-                Log.d("1", "modify_table: 当前选课已经结束");
+            } catch (Exception e) {
+                // 选课结束后人数信息将会变化
+                // 从主选人数、主选已选人数、非主选人数、非主选已选人数4项
+                // 变成限制人数、已选人数2项
+                // 导致正则匹配不成功从而触发ArrayList的越界异常
+                Log.d("1", "modify_table: 此课程选课已结束");
+                Looper.prepare();
+                Toast.makeText(MainActivity.this, "此课程选课已结束\n人数信息不再获取", Toast.LENGTH_SHORT).show();
+                Looper.loop();
             }
         }
         // 将每一行合并
@@ -157,24 +216,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         query = new_table;
     }
+
     // 获取历史记录
     private void get_history() {
         SharedPreferences history_data = getSharedPreferences("history", MODE_PRIVATE);
-        temp_history = "2015计算机科学与技术01\n" +
-                "2015计算机科学与技术02\n" +
-                "2015计算机科学与技术03\n" +
-                "2015计算机科学与技术04\n" +
-                "2015计算机科学与技术05\n" +
-                "2015软件工程01\n" +
-                "2015软件工程02\n" +
-                "2015软件工程03\n" +
-                "2015网络工程01\n";
-        temp_history += history_data.getString("history", "");
-        if (!"".equals(temp_history)) {
-            String[] temp = temp_history.split("\n");
-            Collections.addAll(history, temp);
-        }
+        String get_storage = history_data.getString("history", "");
+        if (get_storage.contains(classes))
+            temp_history = get_storage;
+        else
+            temp_history = get_storage + classes;
+        String[] temp = temp_history.split("\n");
+        Collections.addAll(history, temp);
     }
+
     // 获取课程表、选课结果
     private void get_course_table() {
         new Thread(new Runnable() {
@@ -194,6 +248,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }).start();
     }
+
     // 获得相应课程的人数信息
     private String getRequest(String keyword) {
         try {
@@ -206,7 +261,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Reader r = new InputStreamReader(connection.getInputStream(), "GB2312");
             int c;
             String html = "";
-            while ((c = r.read()) != -1) {  html += (char) c;   }
+            while ((c = r.read()) != -1) {
+                html += (char) c;
+            }
             r.close();
             return html;
         } catch (Exception e) {
@@ -226,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         tabHost.setup(lam);
         // 第1个页面
         TabHost.TabSpec tab1 = tabHost.newTabSpec("tab1")
-                .setIndicator("查课")
+                .setIndicator("课程查询")
                 .setContent(R.id.tab_1);
         tabHost.addTab(tab1);
         // 第2个页面
@@ -239,13 +296,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setIndicator("课程表")
                 .setContent(R.id.tab_3);
         tabHost.addTab(tab3);
+        // 第4个页面
+        TabHost.TabSpec tab4 = tabHost.newTabSpec("tab4")
+                .setIndicator("学分查询")
+                .setContent(R.id.tab_4);
+        tabHost.addTab(tab4);
     }
+
     // 创建菜单
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
+
     // 菜单点击事件
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -266,44 +330,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         return true;
     }
+
     // 创建下拉菜单选项
     private void setSpinner() {
         type = 0;
-        final String arr[]=new String[]{"课程编号", "课程名称", "主选班级"};
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, arr);
-        spinner.setAdapter(arrayAdapter);
         // 注册事件
         spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                Spinner spinner=(Spinner) parent;
-                if(spinner.getItemAtPosition(position)==arr[0])
-                    type = 1;
-                else if(spinner.getItemAtPosition(position)==arr[1])
-                    type = 2;
-                else if(spinner.getItemAtPosition(position)==arr[2])
-                    type = 4;
+                type = position + 1;
+                if (position == 2)
+                    type++;
+                Log.d("1", "onItemSelected type: " + type);
             }
+
             @Override
-            public void onNothingSelected(AdapterView<?> parent) { }
+            public void onNothingSelected(AdapterView<?> parent) {}
         });
     }
+
     @Override
     protected void onPause() {
         // 重写的OnPause方法必须有，漏掉会错
         lam.dispatchPause(isFinishing());
         super.onPause();
     }
+
     @Override
     protected void onResume() {
         // 同上
         lam.dispatchResume();
         super.onResume();
     }
+
     // 点击事件
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.send) {
+        if (v.getId() == R.id.fb_add) {
+            Toast.makeText(MainActivity.this, "选课按钮,敬请期待...", Toast.LENGTH_SHORT).show();
+        } else if (v.getId() == R.id.fb_delete) {
+            Toast.makeText(MainActivity.this, "退课按钮,敬请期待...", Toast.LENGTH_SHORT).show();
+        } else if (v.getId() == R.id.send) {
             // 清除之前储存的信息
             main_limit.clear();
             main_chosen.clear();
@@ -327,14 +394,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     web.post(new Runnable() {
                         @Override
                         public void run() {
-                            web.getSettings().setDefaultTextEncodingName("UTF-8");//设置默认为utf-8
-                            web.loadData(query, "text/html; charset=UTF-8", null);//这种写法可以正确解码
+                            web.getSettings().setDefaultTextEncodingName("UTF-8");// 设置默认为utf-8
+                            web.loadData(query, "text/html; charset=UTF-8", null);// 这种写法可以正确解码
                         }
                     });
                 }
             }).start();
             // 储存查询词
-            if(history.indexOf(QueryStr) == -1) {
+            if (history.indexOf(QueryStr) == -1) {
                 // 本地化储存
                 SharedPreferences save_history = getSharedPreferences("history", MODE_PRIVATE);
                 SharedPreferences.Editor editor = save_history.edit();

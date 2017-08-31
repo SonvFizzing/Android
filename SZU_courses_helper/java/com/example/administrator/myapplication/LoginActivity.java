@@ -163,8 +163,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                     editor.clear();
                 }
                 editor.apply();
-                // post登陆
-                Post();
+                Post(); // post登陆
                 // 登陆成功后获取选课信息
                 break;
             case R.id.button2:
