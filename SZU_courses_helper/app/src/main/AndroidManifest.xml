@@ -23,9 +23,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity android:name=".MainActivity" />
         <activity android:name=".OfflineActivity" />
+        <activity android:name=".Choose_Course"></activity>
     </application>
 
 </manifest>

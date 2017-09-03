@@ -241,8 +241,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     // 获取验证码
     void getImg() {
         try {
-            double a = Math.random();
-            String getImg = url + "/code.asp?id=!!!&random=" + a;
+            // double a = Math.random();
+            String getImg = url + "/captcha.asp";   // 旧版本: "/code.asp?id=!!!&random=" + a;
             URL u = new URL(getImg);
             HttpURLConnection connection = (HttpURLConnection) u.openConnection();
             connection.setRequestMethod("GET");

@@ -150,10 +150,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void modify_table() {
         // 过滤无关信息，改造表格
         query = query.replaceAll("备注</td></tr>", "备注</td><td>主选限制数</td><td>主选已选数</td><td>非主选限制数</td><td>非主选已选数</td></tr>");
-//        query = query.replaceAll("<td>必<br>修</td><td>选<br>修</td>", "");
+        query = query.replaceAll("<td>必<br>修</td><td>选<br>修</td>", "");
         query = query.replaceAll("<td>选课<br>人数</td>", "");
         query = query.replaceAll("<td><img [\\w\\W]{0,140}></td>", "</td>");    // 删除小望远镜图片
-//        query = query.replaceAll("<td><input [\\w\\W]{0,50}修\"></td>","");
+        query = query.replaceAll("<td><input [\\w\\W]{0,50}修\"></td>","");
         Log.d("1", "run: " + query);
         // 查找对应课程的课程编号
         String regex = "<td>([a-zA-z0-9]{2,})</td>"; // 课程编号(考虑MOOC的情况，前面有MC两个字母)
@@ -367,7 +367,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.fb_add) {
-            Toast.makeText(MainActivity.this, "选课按钮,敬请期待...", Toast.LENGTH_SHORT).show();
+            // Toast.makeText(MainActivity.this, "选课按钮,敬请期待...", Toast.LENGTH_SHORT).show();
+            /* 选课功能 */
+            // 跳转到下个活动
+            Intent intent = new Intent(MainActivity.this, Choose_Course.class);
+            intent.putExtra("cookie", cookie);
+            intent.putExtra("url", url);
+            startActivity(intent);
+            /* 选课功能end */
         } else if (v.getId() == R.id.fb_delete) {
             Toast.makeText(MainActivity.this, "退课按钮,敬请期待...", Toast.LENGTH_SHORT).show();
         } else if (v.getId() == R.id.send) {
