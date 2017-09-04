@@ -126,7 +126,7 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
 
     @Override
     public void onClick(View v) {
-        if (v.getId() == ensure) {
+        if (v.getId() == R.id.ensure) {
             queryStr = course_id_input.getText().toString();
             code_str = code_input.getText().toString();
             String course_type;
