@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:inputType="number"
+            android:inputType="text"
             android:maxLines="1" />
     </LinearLayout>
 
@@ -34,7 +34,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="验 证 码： " />
+            android:text="验 证 码  ： " />
 
         <EditText
             android:id="@+id/choose_code_input"
@@ -54,33 +54,55 @@
 
     </LinearLayout>
 
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:layout_marginLeft="20dp"
+        android:checkedButton="@+id/requiered"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/requiered"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="20dp"
+            android:text="必修" />
+
+        <RadioButton
+            android:id="@+id/elective"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="选修" />
+    </RadioGroup>
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
         <Button
             android:id="@+id/cancel"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="取消"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginLeft="30dp"
-            android:layout_marginRight="10dp"/>
+            android:layout_marginRight="10dp"
+            android:layout_weight="1"
+            android:text="取消" />
 
         <Button
             android:id="@+id/ensure"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="确定"
             android:layout_width="0dp"
+            android:layout_height="wrap_content"
             android:layout_marginLeft="10dp"
-            android:layout_marginRight="30dp"/>
+            android:layout_marginRight="30dp"
+            android:layout_weight="1"
+            android:text="确定" />
     </LinearLayout>
 
     <WebView
         android:id="@+id/show_result"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-    </WebView>
+        android:layout_height="wrap_content"></WebView>
 
 </LinearLayout>

@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private LocalActivityManager lam;
     private MyWebView web;
+    private WebView web2;
+    private WebView web3;
     private AutoCompleteTextView input;
     private Spinner spinner;
     private FloatingActionButton add_course;
@@ -88,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         input = (AutoCompleteTextView) findViewById(R.id.input);
         spinner = (Spinner) findViewById(R.id.spinner);
         web = (MyWebView) findViewById(R.id.web);
-        WebView web2 = (WebView) findViewById(R.id.web_view_2);
-        WebView web3 = (WebView) findViewById(R.id.web_view_3);
+        web2 = (WebView) findViewById(R.id.web_view_2);
+        web3 = (WebView) findViewById(R.id.web_view_3);
         WebView web4 = (WebView) findViewById(R.id.web_view_4);
         // 获取传递信息
         Intent intent = getIntent();
@@ -279,7 +281,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
      */
     // 创建选项卡
     private void initial_tabHost() {
-        TabHost tabHost = (TabHost) findViewById(android.R.id.tabhost);
+        final TabHost tabHost = (TabHost) findViewById(android.R.id.tabhost);
         tabHost.setup(lam);
         // 第1个页面
         TabHost.TabSpec tab1 = tabHost.newTabSpec("tab1")
@@ -301,6 +303,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setIndicator("学分查询")
                 .setContent(R.id.tab_4);
         tabHost.addTab(tab4);
+        /* 点击选项卡刷新选课结果和课程表 */
+        tabHost.getTabWidget().getChildAt(1).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tabHost.setCurrentTab(1);
+                xuan_ke = "";
+                ke_cheng_biao = "";
+                get_course_table();
+                while (xuan_ke.equals("")) {}         // 等待页面获取
+                web2.loadData(xuan_ke, "text/html; charset=UTF-8", null);
+                while (ke_cheng_biao.equals("")) {}   // 等待页面获取
+                web3.loadData(ke_cheng_biao, "text/html; charset=UTF-8", null);
+            }
+        }); // 设置监听事件
+        tabHost.getTabWidget().getChildAt(2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                tabHost.setCurrentTab(2);
+                xuan_ke = "";
+                ke_cheng_biao = "";
+                get_course_table();
+                while (xuan_ke.equals("")) {}         // 等待页面获取
+                web2.loadData(xuan_ke, "text/html; charset=UTF-8", null);
+                while (ke_cheng_biao.equals("")) {}   // 等待页面获取
+                web3.loadData(ke_cheng_biao, "text/html; charset=UTF-8", null);
+            }
+        }); // 设置监听事件
+        /* 点击选项卡刷新选课结果和课程表 */
     }
 
     // 创建菜单

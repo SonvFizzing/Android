@@ -110,8 +110,8 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
                 // 获取cookies
                 List<String> cookies = GetHttpResponseHeader();
                 if (cookies != null) {
-                    cookie1 = (cookies.get(0));
-                    cookie2 = (cookies.get(1));
+                    cookie1 = cookies.get(0);
+                    cookie2 = cookies.get(1);
                     cookie1 = cookie1.substring(0, cookie1.indexOf(';'));
                     cookie2 = cookie2.substring(0, cookie2.indexOf(';'));
                     cookie1 = cookie1 + "; " + cookie2;
