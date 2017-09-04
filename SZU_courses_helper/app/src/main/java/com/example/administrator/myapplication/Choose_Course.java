@@ -30,11 +30,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.example.administrator.myapplication.R.id.ensure;
-
 /* 需要完善的地方:
  * [1] 选课发送请求带上cookie
- * [2] 没有空位的课程添加后天监控
+ * [2] 没有空位的课程添加后台监控
  * [3] 补全选择课程的类型处理
  */
 public class Choose_Course extends AppCompatActivity implements View.OnClickListener {
@@ -96,7 +94,6 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
                     connection.setRequestMethod("GET");
                     connection.setRequestProperty("Accept", "image/webp,image/*,*/*;q=0.8");
                     connection.setRequestProperty("Cookie", cookie);
-                    connection.setRequestProperty("Referer", "http://192.168.240.168/xuanke/choosecheck.asp?stu_no=test&no_type=MC99004301+%D1%A1%D0%DE");
 
                     DataInputStream input = new DataInputStream(connection.getInputStream());
                     file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "codeimg1.jpg");
