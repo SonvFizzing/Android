@@ -46,6 +46,8 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
 
     private String url;
     private String cookie;
+    private String cookie1;
+    private String cookie2;
     private String queryStr;
     private String code_str;
     private static final String required_encode = "%B1%D8%D0%DE"; // "必修"编码后的字符串[GB2312]
@@ -60,10 +62,15 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
         Intent intent = getIntent();
         cookie = intent.getStringExtra("cookie");
         url = intent.getStringExtra("url");
+        String[] cookies = cookie.split(";");
+        for (int i=0; i < cookies.length; i++) {
+            cookies[i] = cookies[i].trim();
+            Log.d("1", "split cookie: " + cookies[i]);
+        }
+        cookie1 = cookies[0];
+        cookie2 = cookies[1];
         Log.d("1", "get cookie: " + cookie);
         Log.d("1", "get url: " + url);
-        // 获取验证码
-        getImg();
         // 获取组件
         required_select = (RadioButton) findViewById(R.id.requiered);
         Button ensure = (Button) findViewById(R.id.ensure);
@@ -72,6 +79,8 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
         course_id_input = (EditText) findViewById(R.id.course_code_input);
         code_input = (EditText) findViewById(R.id.choose_code_input);
         web = (WebView) findViewById(R.id.show_result);
+        // 获取验证码
+        getImg();
         // 组件设置
         web.getSettings().setDefaultTextEncodingName("GB2312"); // 设置为GB2312
         web.setWebViewClient(new WebViewClient());
@@ -82,6 +91,16 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
 
     // 获取验证码
     void getImg() {
+        /* 尝试向头部信息添加refer
+        String test_url = "http://192.168.240.168/xuanke/choosecheck.asp?stu_no=test&no_type=";
+        String course_num = course_id_input.getText().toString();
+        String type;
+        if (required_select.isChecked())
+            type = required_encode;
+        else
+            type = elective_encode;
+        final String refer = test_url + course_num + "+" + type;
+        */
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -94,6 +113,10 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
                     connection.setRequestMethod("GET");
                     connection.setRequestProperty("Accept", "image/webp,image/*,*/*;q=0.8");
                     connection.setRequestProperty("Cookie", cookie);
+                    /* 尝试向头部信息添加refer
+                    connection.setRequestProperty("Referer", refer);
+                    Log.d("1", "code referer: " + refer);
+                    */
 
                     DataInputStream input = new DataInputStream(connection.getInputStream());
                     file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "codeimg1.jpg");
@@ -190,7 +213,8 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
         CookieSyncManager.createInstance(Choose_Course.this);
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
-        cookieManager.setCookie(target_url, cookie);  // cookie是要设置的cookie字符串
+        cookieManager.setCookie("http://192.168.240.168/xuanke/", cookie1);  // 特别注意, 每对key-value要单独设置
+        cookieManager.setCookie("http://192.168.240.168/xuanke/", cookie2);
         CookieSyncManager.getInstance().sync();
         // 发送请求
         web.loadUrl(target_url, referer);
