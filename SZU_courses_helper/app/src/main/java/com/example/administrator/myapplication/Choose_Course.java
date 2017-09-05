@@ -25,15 +25,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /* 需要完善的地方:
- * [1] 选课发送请求带上cookie
- * [2] 没有空位的课程添加后台监控
- * [3] 补全选择课程的类型处理
+ * [1] 没有空位的课程添加后台监控
  */
 public class Choose_Course extends AppCompatActivity implements View.OnClickListener {
 
@@ -171,6 +167,16 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
             public void run() {
                 String num_status1;
                 num_status1 = getRequest("/sele_count1.asp?course_no=" + str);
+                /* 判断人数信息种类start    [2种: 4个数字\2个数字] */
+                String info_type_regex = "已选";
+                Pattern pattern0 = Pattern.compile(info_type_regex);
+                Matcher matcher0 = pattern0.matcher(num_status1);
+                int count = 0;
+                while (matcher0.find())
+                    count++;
+                Log.d("1", "count: " + count);
+                if (count == 2) {
+                /* 判断人数信息种类end */
                 Log.d("1", "run getrequest: " + num_status1);
                 String num_regex = "<br>主选学生限制人数：([\\d]+)&nbsp;&nbsp;主选学生已选人数：([\\d]+)<br>非主选学生限制人数：([\\d]+)&nbsp;&nbsp;非主选学生已选人数：([\\d]+)</body>";
                 Pattern pattern1 = Pattern.compile(num_regex);
@@ -197,6 +203,35 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
                         Looper.loop();
                     }
                 }
+                /* 判断人数信息种类start */
+                }
+                else if (count == 1) {
+                    // 抓取人数信息
+                    String num_regex = "<br>限制人数：([\\d]+)&nbsp;&nbsp;已选人数：([\\d]+)</body>";
+                    Pattern pattern1 = Pattern.compile(num_regex);
+                    Matcher matcher1 = pattern1.matcher(num_status1);
+                    while (matcher1.find()) {
+                        int limit_num = Integer.parseInt(matcher1.group(1));
+                        int chosen_num = Integer.parseInt(matcher1.group(2));
+                        Log.d("1", "limit num: " + limit_num);
+                        Log.d("1", "chosen num: " + chosen_num);
+                        if (limit_num > chosen_num) {    // 有空位
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    send_require(type);
+                                }
+                            });
+                        } else {    // 没有空位
+                            Looper.prepare();
+                            Toast.makeText(Choose_Course.this, "还没有空位...", Toast.LENGTH_SHORT).show();
+                            Looper.loop();
+                        }
+                    }
+                }
+                else
+                    Log.d("1", "count error: ");
+            /* 判断人数信息种类end */
             }
         }).start();
     }
@@ -204,8 +239,8 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
     // 发送选课请求
     void send_require(String type) {
         // 设置头部信息
-        Map<String, String> referer = new HashMap<>();
-        referer.put("Referer", "http://192.168.240.168/xuanke/choosecheck.asp?stu_no=test&no_type=" + queryStr + "+" + type);
+//        Map<String, String> referer = new HashMap<>();
+//        referer.put("Referer", "http://192.168.240.168/xuanke/choosecheck.asp?stu_no=test&no_type=" + queryStr + "+" + type);
         web.loadUrl(null);
         String target_url = url + "/choose.asp?GetCode=" + code_str + "&no_type=" + queryStr
                 + "+" + type + "&submit=%C8%B7++++%B6%A8";
@@ -217,7 +252,8 @@ public class Choose_Course extends AppCompatActivity implements View.OnClickList
         cookieManager.setCookie("http://192.168.240.168/xuanke/", cookie2);
         CookieSyncManager.getInstance().sync();
         // 发送请求
-        web.loadUrl(target_url, referer);
+//        web.loadUrl(target_url, referer);
+        web.loadUrl(target_url);
         Log.d("1", "send_require target url:\n" + target_url);
     }
 
